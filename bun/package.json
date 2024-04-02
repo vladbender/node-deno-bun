@@ -1,0 +1,9 @@
+{
+  "scripts": {
+    "tsc": "tsc"
+  },
+  "dependencies": { "typescript": "^5.4.3" },
+  "devDependencies": {
+    "bun-types": "^1.0.35"
+  }
+}

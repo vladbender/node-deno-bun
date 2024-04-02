@@ -1,0 +1,45 @@
+version: '3.8'
+
+services:
+  node:
+    build: ./node
+    image: jump_node:latest
+    container_name: jump_node
+    networks:
+      - jump
+    environment:
+      ME: Node
+      PORT: $NODE_PORT
+      JUMP_URL: "http://jump_deno:$DENO_PORT"
+    ports:
+      - $NODE_PORT:$NODE_PORT
+
+  deno:
+    build: ./deno
+    image: jump_deno:latest
+    container_name: jump_deno
+    networks:
+      - jump
+    environment:
+      ME: Deno
+      PORT: $DENO_PORT
+      JUMP_URL: "http://jump_bun:$BUN_PORT"
+    ports:
+      - $DENO_PORT:$DENO_PORT
+  
+  bun:
+    build: ./bun
+    image: jump_bun:latest
+    container_name: jump_bun
+    networks:
+      - jump
+    environment:
+      ME: Bun
+      PORT: $BUN_PORT
+      JUMP_URL: "http://jump_node:$NODE_PORT"
+    ports:
+      - $BUN_PORT:$BUN_PORT
+
+networks:
+  jump:
+    name: jump
