@@ -5,41 +5,32 @@ import { writeNotFound, writeInternalServerError } from './utils'
 
 export type Handler = (request: IncomingMessage, response: ServerResponse) => void | Promise<void>
 
-type Routes = {
-  method: string,
-  path: string,  
-  handler: Handler
-}
+const getKey = (method: string, path: string): string => `${method}:${path}`
 
 export class Router {
-  private routes: Array<Routes> = []
+  private routes: Map<string, Handler> = new Map()
 
   on(method: string, path: string, handler: Handler): this {
-    this.routes.push({
-      method,
-      path,
-      handler,
-    })
+    this.routes.set(getKey(method, path), handler)
     return this
   }
 
   handle(request: IncomingMessage, response: ServerResponse): void {
-    const expectedMethod = request.method
-    const expectedPath = new URL(request.url ?? '', `http://${request.headers.host}`).pathname.toLowerCase()
+    const method = request.method
+    const path = new URL(request.url ?? '', `http://${request.headers.host}`).pathname.toLowerCase()
 
-    for (const { method, path, handler } of this.routes) {
-      if (expectedMethod === method && expectedPath === path) {
-        Promise.resolve(
-          new Promise(resolve => resolve(handler(request, response)))
-        )
-          .catch((err) => {
-            console.error('Error while handling', err)
-            writeInternalServerError(response)
-          })
-        return
-      }
+    const key = getKey(method ?? '', path)
+    const handler = this.routes.get(key)
+    
+    if (!handler) {
+      writeNotFound(response)
+      return
     }
 
-    writeNotFound(response)
+    new Promise((res) => res(handler(request, response)))
+      .catch((err) => {
+        console.error('Error while handling', err)
+        writeInternalServerError(response)
+      })
   }
 }
